@@ -135,7 +135,7 @@
   <joint name="scan_joint" type="fixed">
     <parent link="base_link"/>
     <child link="base_scan"/>
-    <origin xyz="-0.032 0 0.172" rpy="0 0 0"/>
+    <origin xyz="-0.032 0 0.4" rpy="0 0 0"/>
   </joint>
 
   <link name="base_scan">
@@ -148,7 +148,7 @@
     </visual>
 
     <collision>
-      <origin xyz="0.015 0 -0.0065" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <cylinder length="0.0315" radius="0.055"/>
       </geometry>
@@ -188,7 +188,7 @@
   <joint name="gripper2_joint" type="fixed">
     <parent link="base_link"/>
     <child link="gripper2_link"/>
-    <origin xyz="0.06 -0.045 0.04" rpy="1.57 0 1.42"/>
+    <origin xyz="0.06 -0.045 0.02" rpy="1.57 0 1.42"/>
   </joint>
 
   <link name="gripper2_link" type="fixed">
@@ -224,7 +224,7 @@
     </visual>
 
     <collision>
-      <origin xyz="0.015 0 -0.0065" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <cylinder length="0.0315" radius="0.055"/>
       </geometry>
