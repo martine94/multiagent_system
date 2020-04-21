@@ -130,6 +130,7 @@
   </joint>
 
   <link name="imu_link"/>
+  
 
   <joint name="scan_joint" type="fixed">
     <parent link="base_link"/>
@@ -162,10 +163,55 @@
     </inertial>
   </link>
 
+  <joint name="gripper1_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="gripper1_link"/>
+    <origin xyz="0.06 0.045 0.04" rpy="1.57 0 1.72"/>
+  </joint>
+
+  <link name="gripper1_link" type="fixed">
+    <visual>
+      <geometry>
+        <cylinder length="0.1" radius="0.005"/>
+      </geometry>
+      <material name="blue">
+        <color rgba="0 0 .8 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.1" radius="0.005"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <joint name="gripper2_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="gripper2_link"/>
+    <origin xyz="0.06 -0.045 0.04" rpy="1.57 0 1.42"/>
+  </joint>
+
+  <link name="gripper2_link" type="fixed">
+    <visual>
+      <geometry>
+        <cylinder length="0.1" radius="0.005"/>
+      </geometry>
+      <material name="blue">
+        <color rgba="0 0 .8 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.1" radius="0.005"/>
+      </geometry>
+    </collision>
+  </link>
+
+
   <joint name="scan2_joint" type="fixed">
     <parent link="base_link"/>
     <child link="second_scan"/>
-    <origin xyz="-0.032 0 0.06" rpy="0 0 0"/>
+    <origin xyz="-0.032 0 0.06	" rpy="0 0 0"/>
   </joint>
 
   <link name="second_scan">
