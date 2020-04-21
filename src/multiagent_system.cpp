@@ -9,18 +9,21 @@
 
 // Global variables
 ros::Publisher pub;
-ros::Subscriber sensor_sub1, sensor_sub2;
+ros::Subscriber sensor_sub1, sensor_sub1_2;
+ros::Subscriber sensor_sub2, sensor_sub2_2;
 
 double start_x = 0.0, start_y = 0.0, vel, rot,
 start_rot = 0, goal_rot = 0;
 int count = 0;
 bool should_move = true, start;
 
+bool canInPlace = false;
+bool pushesCan = false;
 bool lock = false;
-std::vector<std::vector<float>> distances(2);
-std::vector<std::vector<float>> angles(2);
+std::vector<std::vector<float>> distances(4);
+std::vector<std::vector<float>> angles(4);
 
-void sensorCallback1(const sensor_msgs::LaserScan::ConstPtr& msg) {
+void sensorCallback0(const sensor_msgs::LaserScan::ConstPtr& msg) {
   // Clear data from previous scan reading.
   distances[0].clear();
   angles[0].clear();
@@ -40,7 +43,27 @@ void sensorCallback1(const sensor_msgs::LaserScan::ConstPtr& msg) {
       }
 }
 
-void sensorCallback2(const sensor_msgs::LaserScan::ConstPtr& msg) {
+void sensorCallback0_2(const sensor_msgs::LaserScan::ConstPtr& msg) {
+  // Clear data from previous scan reading.
+  distances[2].clear();
+  angles[2].clear();
+
+  // Store distance readings in class-scope vector.
+  for( int i = 0; i < msg->ranges.size(); i++) {
+    distances[2].push_back(msg->ranges[i]);
+  }
+
+  // Store scan angularities in class-scope vector.
+  float angle = msg->angle_min;
+  for( ; angle < msg->angle_max; angle += msg->angle_increment) {
+    angles[2].push_back(angle);
+  }
+  for(float &d : distances[2]){
+              d = d < 0.08 ? std::numeric_limits<float>::infinity() : d;
+      }
+}
+
+void sensorCallback1(const sensor_msgs::LaserScan::ConstPtr& msg) {
   // Clear data from previous scan reading.
   distances[1].clear();
   angles[1].clear();
@@ -60,6 +83,26 @@ void sensorCallback2(const sensor_msgs::LaserScan::ConstPtr& msg) {
       }
 }
 
+void sensorCallback1_2(const sensor_msgs::LaserScan::ConstPtr& msg) {
+  // Clear data from previous scan reading.
+  distances[3].clear();
+  angles[3].clear();
+
+  // Store distance readings in class-scope vector.
+  for( int i = 0; i < msg->ranges.size(); i++) {
+    distances[3].push_back(msg->ranges[i]);
+  }
+
+  // Store scan angularities in class-scope vector.
+  float angle = msg->angle_min;
+  for( ; angle < msg->angle_max; angle += msg->angle_increment) {
+    angles[3].push_back(angle);
+  }
+  for(float &d : distances[3]){
+              d = d < 0.08 ? std::numeric_limits<float>::infinity() : d;
+      }
+}
+
 float regionDistance(const float &start, const float &stop, int r) {
   int i = 0, j = 0;
   if(angles[r].empty()){ return 8.0;}
@@ -73,23 +116,23 @@ float regionDistance(const float &start, const float &stop, int r) {
 }
 
 bool avoid(geometry_msgs::Twist &msg, int r) {
-      float minLeft = regionDistance(M_PI/2, 3*M_PI/10, r);
-      float minLeftFront = regionDistance(3*M_PI/10, M_PI/10.0, r);
+      float minLeft = regionDistance(M_PI/2.0, 3.0*M_PI/10.0, r);
+      float minLeftFront = regionDistance(3.0*M_PI/10.0, M_PI/10.0, r);
       float minFront = regionDistance(M_PI/10.0, -M_PI/10.0, r);
-      float minRightFront = regionDistance(-M_PI/10.0, -3*M_PI/10, r);
-      float minRight = regionDistance(-3*M_PI/10, -M_PI/2, r);
+      float minRightFront = regionDistance(-M_PI/10.0, -3.0*M_PI/10.0, r);
+      float minRight = regionDistance(-3.0*M_PI/10.0, -M_PI/2.0, r);
       float direction = 0.0;
-      if(minFront < 1.0/2) {
+      if(minFront < 1.0) {
           if(minLeftFront < minRightFront)
-              direction = -0.1;
+              direction = -0.2;
           else
-              direction = 0.1;
+              direction = 0.2;
 
           lock = true;
           ROS_INFO("WALL FRONT");
           ROS_INFO("%f", minFront);
-          if(minFront < 0.8/2) {
-              if(minFront < 0.6/2) {
+          if(minFront < 0.8) {
+              if(minFront < 0.6) {
                   msg.linear.x = 0.0;
                   msg.angular.z = direction;
                   ROS_INFO("TURN");
@@ -109,68 +152,68 @@ bool avoid(geometry_msgs::Twist &msg, int r) {
           msg.angular.z = msg.angular.z*10;
           return false;
       }
-      if(minLeftFront < 0.9/2) {
+      if(minLeftFront < 0.9) {
           lock = true;
           ROS_INFO("WALL LEFTFRONT");
-          if(minLeftFront < 0.7/2) {
-              if(minLeftFront < 0.5/2) {
+          if(minLeftFront < 0.7) {
+              if(minLeftFront < 0.5) {
                   msg.linear.x = 0.0;
-                  msg.angular.z = -0.1;
+                  msg.angular.z = -0.2;
                   ROS_INFO("TURN");
               }
               else {
                   msg.linear.x = 0.07;
-                  msg.angular.z = -0.1;
+                  msg.angular.z = -0.2;
                   ROS_INFO("Move slow while Turn");
               }
           }
           else
           {
               msg.linear.x = 0.1;
-              msg.angular.z = -0.1;
+              msg.angular.z = -0.2;
               ROS_INFO("Start Truning");
           }
           msg.angular.z = msg.angular.z*10;
           return false;
       }
-      if(minRightFront < 0.9/2) {
+      if(minRightFront < 0.9) {
           lock = true;
           ROS_INFO("WALL RIGHTFRONT");
-          if(minRightFront < 0.7/2) {
-              if(minRightFront < 0.5/2) {
+          if(minRightFront < 0.7) {
+              if(minRightFront < 0.5) {
                   msg.linear.x = 0.0;
-                  msg.angular.z = 0.1;
+                  msg.angular.z = 0.2;
                   ROS_INFO("TURN");
               }
               else {
                   msg.linear.x = 0.07;
-                  msg.angular.z = 0.1;
+                  msg.angular.z = 0.2;
                   ROS_INFO("Move slow while Turn");
               }
           }
           else
           {
               msg.linear.x = 0.1;
-              msg.angular.z = 0.1;
+              msg.angular.z = 0.2;
               ROS_INFO("Start Truning");
           }
           msg.angular.z = msg.angular.z*10;
           return false;
       }
-      if(minLeft < 0.5/2) {
+      if(minLeft < 0.5) {
           lock = true;
           ROS_INFO("WALL LEFT");
           msg.linear.x = 0.1;
-          msg.angular.z = -0.1;
+          msg.angular.z = -0.2;
           ROS_INFO("TURN");
           msg.angular.z = msg.angular.z*10;
           return false;
       }
-      if(minRight < 0.5/2) {
+      if(minRight < 0.5) {
           lock = true;
           ROS_INFO("WALL RIGHT");
           msg.linear.x = 0.1;
-          msg.angular.z = 0.1;
+          msg.angular.z = 0.2;
           ROS_INFO("TURN");
           msg.angular.z = msg.angular.z*10;
           return false;
@@ -180,11 +223,79 @@ bool avoid(geometry_msgs::Twist &msg, int r) {
       return false;
   }
 
-bool chaseCan(geometry_msgs::Twist &msg, int r)
+bool sortCan(int r)
 {
+    float minLeft = regionDistance(M_PI/2.0, 3.0*M_PI/10.0, r);
+    float minLeftFront = regionDistance(3.0*M_PI/10.0, M_PI/10.0, r);
+    float minFront = regionDistance(M_PI/10.0, -M_PI/10.0, r);
+    float minRightFront = regionDistance(-M_PI/10.0, -3.0*M_PI/10.0, r);
+    float minRight = regionDistance(-3.0*M_PI/10.0, -M_PI/2.0, r);
+
+    if(minLeftFront < 0.2 && minRightFront < 0.2)
+    {
+        ROS_INFO("Can In Place");
+       return true;
+    }
+    if(canInPlace && minLeftFront < 1.0 && minRightFront < 1.0)
+    {
+        ROS_INFO("Backing Away From Can");
+        return true;
+    }
 
     return false;
 }
+
+bool chaseCan(geometry_msgs::Twist &msg, int r)
+{
+    float minLeftWall = regionDistance(M_PI/2.0, 3.0*M_PI/10.0, (r-2));
+    float minLeftFrontWall = regionDistance(3.0*M_PI/10.0, M_PI/10.0, (r-2));
+    float minFrontWall = regionDistance(M_PI/10.0, -M_PI/10.0, (r-2));
+    float minRightFrontWall = regionDistance(-M_PI/10.0, -3.0*M_PI/10.0, (r-2));
+    float minRightWall = regionDistance(-3.0*M_PI/10.0, -M_PI/2.0, (r-2));
+    if(!pushesCan && (minFrontWall < 1.0 || minLeftFrontWall < 1.0 || minRightFrontWall < 1.0))
+    {
+        ROS_INFO("NO CAN AVOID WALL");
+        return false;
+    }
+    canInPlace = sortCan(r);
+    if(canInPlace)
+    {
+        ROS_INFO("Can in Place ChaseCan");
+        msg.linear.x = -1.0;
+        msg.angular.z = 0.3;
+        return false;
+    }
+    float minLeft = regionDistance(M_PI/2.0, 3.0*M_PI/10.0, r);
+    float minLeftFront = regionDistance(3.0*M_PI/10.0, M_PI/10.0, r);
+    float minFront = regionDistance(M_PI/10.0, -M_PI/10.0, r);
+    float minRightFront = regionDistance(-M_PI/10.0, -3.0*M_PI/10.0, r);
+    float minRight = regionDistance(-3.0*M_PI/10.0, -M_PI/2.0, r);
+    float direction = 0.0;
+
+    pushesCan = false;
+
+    if(minFront < 0.5)
+    {
+        direction = msg.angular.z;
+        ROS_INFO("Pushes Can %d", r);
+        pushesCan = true;
+    }
+    else if(minLeftFront < 0.7 && minLeftFront < minFront)
+    {
+        direction = 1.0;
+        ROS_INFO("Targeting Can Left %d", r);
+    }
+    else if(minRightFront < 0.7 && minRightFront < minFront)
+    {
+        direction = -1.0;
+        ROS_INFO("Targeting Can Right %d", r);
+    }
+
+    msg.angular.z = direction;
+    return false;
+}
+
+
 
 //////////////////////////////////////////////////////////////
 //
@@ -209,8 +320,11 @@ int main(int argc, char **argv) {
   //ros::Subscriber sub = n.subscribe("/robot_0/base_pose_ground_truth",
 	//			    1000,
 		//		    poseCallback);
-  sensor_sub1 = n.subscribe("/robot1/scan", 1000, sensorCallback1);
-  sensor_sub2 = n.subscribe("/robot2/scan", 1000, sensorCallback2);
+  sensor_sub1 = n.subscribe("/robot1/scan", 2, sensorCallback0);
+  sensor_sub1_2 = n.subscribe("/robot1/scan2", 2, sensorCallback0_2);
+
+  sensor_sub2 = n.subscribe("/robot2/scan", 2, sensorCallback1);
+  sensor_sub2_2 = n.subscribe("/robot2/scan2", 2, sensorCallback1_2);
   /**
    * To tell ROS that we are going to publish velocity (Twist)
    * messages, we use the advertise() fn.
@@ -229,12 +343,14 @@ int main(int argc, char **argv) {
         vel.twist.linear.x = 1.0;
         vel.twist.angular.z = 0.0;
         avoid(vel.twist,0);
+        chaseCan(vel.twist,2);
 
         vel2.model_name = "turtlebot3_burger1";
         vel2.reference_frame = "turtlebot3_burger1";
         vel2.twist.linear.x = 1.0;
         vel2.twist.angular.z = 0.0;
         avoid(vel2.twist,1);
+        chaseCan(vel2.twist,3);
 
     /**
      * Calls poseCallback once for each iteration.
