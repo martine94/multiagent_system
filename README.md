@@ -1,4 +1,9 @@
 # multiagent_system
+
+#Prerequisite
+To run this project you need to have Turtlebot3 in your catkin workspace.
+You also need to have gazebo installed.
+
 Catkin repository for multiagent_system course
 
 After building:
