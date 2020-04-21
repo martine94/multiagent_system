@@ -4,9 +4,9 @@ Catkin repository for multiagent_system course
 After building:
 
 
-To run, use the following command to start an empty gazebo instance:
+To run, first start the map. This is done from the launch folder by entering the following command:
 
-$ roslaunch gazebo_ros empty_world.launch
+$ roslaunch multiagent.launch
 
 If everything has been installed correctly, you should have two very simple maps/worlds that you can use in gazebo.
 Input one or multiple turtle-bots within this map. At the moment, the project only moves one turtle-bot forward.
