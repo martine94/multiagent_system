@@ -16,7 +16,7 @@
     <population name="can_population1">
       <model name="can1">
         <include>
-          <static>true</static>
+          <static>false</static>
           <uri>model://coke_can</uri>
         </include>
       </model>
