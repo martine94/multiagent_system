@@ -5,8 +5,8 @@
   <arg name="z_pos" default="0.0"/>
 
   <arg name="model1" default="burger" doc="model type [burger, waffle, waffle_pi]"/>
-  <arg name="x" default="3.0"/>
-  <arg name="y" default="3.0"/>
+  <arg name="x" default="1.0"/>
+  <arg name="y" default="1.5"/>
   <arg name="z" default="0.0"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
