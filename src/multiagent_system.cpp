@@ -322,7 +322,41 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
     return false;
 }
 
+void checkDirection(geometry_msgs::Twist &msg, int r)
+{
+    float minLeft = regionDistance(M_PI/2.0, 3.0*M_PI/10.0, r);
+    float minLeftFront = regionDistance(3.0*M_PI/10.0, M_PI/10.0, r);
+    float minFront = regionDistance(M_PI/10.0, -M_PI/10.0, r);
+    float minRightFront = regionDistance(-M_PI/10.0, -3.0*M_PI/10.0, r);
+    float minRight = regionDistance(-3.0*M_PI/10.0, -M_PI/2.0, r);
+    float direction = 0.0;
 
+    if(minFront < 6.0 &&
+       minFront < minLeftFront &&
+       minFront < minRightFront &&
+       minFront < minLeft &&
+       minFront < minRight)
+        ROS_INFO("Front: %f", minFront);
+
+    else if(minLeftFront < 6.0 &&
+            minLeftFront < minRightFront &&
+            minLeftFront < minLeft &&
+            minLeftFront < minRight)
+        ROS_INFO("LeftFront: %f", minLeftFront);
+
+    else if(minRightFront < 6.0 &&
+            minLeftFront < minLeft &&
+            minLeftFront < minRight)
+        ROS_INFO("RightFront: %f", minRightFront);
+
+    else if(minLeft < 6.0 &&
+            minLeft < minRight)
+        ROS_INFO("Left: %f", minLeft);
+
+    else if(minRight < 6.0)
+        ROS_INFO("Right: %f", minRight);
+
+}
 
 //////////////////////////////////////////////////////////////
 //
@@ -367,17 +401,18 @@ int main(int argc, char **argv) {
         gazebo_msgs::ModelState vel, vel2;
         vel.model_name = "turtlebot3_burger";
         vel.reference_frame = "turtlebot3_burger";
-        vel.twist.linear.x = 1.0;
+        vel.twist.linear.x = 0.5;
         vel.twist.angular.z = 0.4;
-        avoid(vel.twist,0);
-        chaseCan(vel.twist,2);
+        //avoid(vel.twist,0);
+        //chaseCan(vel.twist,2);
+        checkDirection(vel.twist,2);
 
         vel2.model_name = "turtlebot3_burger1";
         vel2.reference_frame = "turtlebot3_burger1";
-        vel2.twist.linear.x = 1.0;
+        vel2.twist.linear.x = 0.5;
         vel2.twist.angular.z = 0.4;
-        avoid(vel2.twist,1);
-        chaseCan(vel2.twist,3);
+        //avoid(vel2.twist,1);
+        //chaseCan(vel2.twist,3);
 
     /**
      * Calls poseCallback once for each iteration.
@@ -385,8 +420,8 @@ int main(int argc, char **argv) {
 
     ros::spinOnce();
     loop_rate.sleep();
-    pub.publish(vel);
-    pub.publish(vel2);
+    //pub.publish(vel);
+    //pub.publish(vel2);
 
   }
   return 0;
