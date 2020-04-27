@@ -166,7 +166,7 @@
   <joint name="gripper1_joint" type="fixed">
     <parent link="base_link"/>
     <child link="gripper1_link"/>
-    <origin xyz="0.06 0.045 0.04" rpy="1.57 0 1.72"/>
+    <origin xyz="0.06 0.045 0.04" rpy="1.57 0 1.92"/>
   </joint>
 
   <link name="gripper1_link" type="fixed">
@@ -188,7 +188,7 @@
   <joint name="gripper2_joint" type="fixed">
     <parent link="base_link"/>
     <child link="gripper2_link"/>
-    <origin xyz="0.06 -0.045 0.02" rpy="1.57 0 1.42"/>
+    <origin xyz="0.06 -0.045 0.04" rpy="1.57 0 1.32"/>
   </joint>
 
   <link name="gripper2_link" type="fixed">
