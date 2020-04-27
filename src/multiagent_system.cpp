@@ -8,7 +8,7 @@
 #define M_PI 3.14159265358979323846  
 
 // Global variables
-ros::Publisher pub;
+ros::Publisher pub, movement_pub_rob1, movement_pub_rob2;
 ros::Subscriber sensor_sub1, sensor_sub1_2;
 ros::Subscriber sensor_sub2, sensor_sub2_2;
 
@@ -117,11 +117,13 @@ float regionDistance(const float &start, const float &stop, int r) {
 }
 
 bool avoid(geometry_msgs::Twist &msg, int r) {
-      float minLeft = regionDistance(M_PI/2.0, 3.0*M_PI/10.0, r);
-      float minLeftFront = regionDistance(3.0*M_PI/10.0, M_PI/10.0, r);
-      float minFront = regionDistance(M_PI/10.0, -M_PI/10.0, r);
-      float minRightFront = regionDistance(-M_PI/10.0, -3.0*M_PI/10.0, r);
-      float minRight = regionDistance(-3.0*M_PI/10.0, -M_PI/2.0, r);
+    float minRight = regionDistance(M_PI*(11.0/8.0), M_PI*(13.0/8.0), r);
+    float minRightFront = regionDistance(M_PI*(13.0/8.0), M_PI*(15.0/8.0), r);
+    float minFront1 = regionDistance(M_PI*(15.0/8.0), M_PI*(16.0/8.0), r);
+    float minFront2 = regionDistance(M_PI*(0.0/8.0), M_PI*(1.0/8.0), r);
+    float minLeftFront = regionDistance(M_PI*(1.0/8.0), M_PI*(3.0/8.0), r);
+    float minLeft = regionDistance(M_PI*(3.0/8.0), M_PI*(5.0/8.0), r);
+    float minFront = std::min(minFront1,minFront2);
       float direction = 0.0;
       if(minFront < 1.0) {
           if(minLeftFront < minRightFront)
@@ -226,11 +228,13 @@ bool avoid(geometry_msgs::Twist &msg, int r) {
 
 bool sortCan(int r)
 {
-    float minLeft = regionDistance(M_PI/2.0, 3.0*M_PI/10.0, r);
-    float minLeftFront = regionDistance(3.0*M_PI/10.0, M_PI/10.0, r);
-    float minFront = regionDistance(M_PI/10.0, -M_PI/10.0, r);
-    float minRightFront = regionDistance(-M_PI/10.0, -3.0*M_PI/10.0, r);
-    float minRight = regionDistance(-3.0*M_PI/10.0, -M_PI/2.0, r);
+    float minRight = regionDistance(M_PI*(11.0/8.0), M_PI*(13.0/8.0), r);
+    float minRightFront = regionDistance(M_PI*(13.0/8.0), M_PI*(15.0/8.0), r);
+    float minFront1 = regionDistance(M_PI*(15.0/8.0), M_PI*(16.0/8.0), r);
+    float minFront2 = regionDistance(M_PI*(0.0/8.0), M_PI*(1.0/8.0), r);
+    float minLeftFront = regionDistance(M_PI*(1.0/8.0), M_PI*(3.0/8.0), r);
+    float minLeft = regionDistance(M_PI*(3.0/8.0), M_PI*(5.0/8.0), r);
+    float minFront = std::min(minFront1,minFront2);
 
     if(minLeftFront < 0.2 && minRightFront < 0.2)
     {
@@ -254,11 +258,13 @@ bool sortCan(int r)
 
 bool chaseCan(geometry_msgs::Twist &msg, int r)
 {
-    float minLeftWall = regionDistance(M_PI/2.0, 3.0*M_PI/10.0, (r-2));
-    float minLeftFrontWall = regionDistance(3.0*M_PI/10.0, M_PI/10.0, (r-2));
-    float minFrontWall = regionDistance(M_PI/10.0, -M_PI/10.0, (r-2));
-    float minRightFrontWall = regionDistance(-M_PI/10.0, -3.0*M_PI/10.0, (r-2));
-    float minRightWall = regionDistance(-3.0*M_PI/10.0, -M_PI/2.0, (r-2));
+    float minRightWall = regionDistance(M_PI*(11.0/8.0), M_PI*(13.0/8.0), r-2);
+    float minRightFrontWall = regionDistance(M_PI*(13.0/8.0), M_PI*(15.0/8.0), r-2);
+    float minFront1Wall = regionDistance(M_PI*(15.0/8.0), M_PI*(16.0/8.0), r-2);
+    float minFront2Wall = regionDistance(M_PI*(0.0/8.0), M_PI*(1.0/8.0), r-2);
+    float minLeftFrontWall = regionDistance(M_PI*(1.0/8.0), M_PI*(3.0/8.0), r-2);
+    float minLeftWall = regionDistance(M_PI*(3.0/8.0), M_PI*(5.0/8.0), r-2);
+    float minFrontWall = std::min(minFront1Wall, minFront2Wall);
     if(!pushesCan && (minFrontWall < 1.0 || minLeftFrontWall < 1.0 || minRightFrontWall < 1.0))
     {
         ROS_INFO("NO CAN AVOID WALL");
@@ -278,11 +284,13 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
         msg.angular.z = 0.7;
         return false;
     }
-    float minLeft = regionDistance(M_PI/2.0, 3.0*M_PI/10.0, r);
-    float minLeftFront = regionDistance(3.0*M_PI/10.0, M_PI/10.0, r);
-    float minFront = regionDistance(M_PI/10.0, -M_PI/10.0, r);
-    float minRightFront = regionDistance(-M_PI/10.0, -3.0*M_PI/10.0, r);
-    float minRight = regionDistance(-3.0*M_PI/10.0, -M_PI/2.0, r);
+    float minRight = regionDistance(M_PI*(11.0/8.0), M_PI*(13.0/8.0), r);
+    float minRightFront = regionDistance(M_PI*(13.0/8.0), M_PI*(15.0/8.0), r);
+    float minFront1 = regionDistance(M_PI*(15.0/8.0), M_PI*(16.0/8.0), r);
+    float minFront2 = regionDistance(M_PI*(0.0/8.0), M_PI*(1.0/8.0), r);
+    float minLeftFront = regionDistance(M_PI*(1.0/8.0), M_PI*(3.0/8.0), r);
+    float minLeft = regionDistance(M_PI*(3.0/8.0), M_PI*(5.0/8.0), r);
+    float minFront = std::min(minFront1,minFront2);
     float direction = 0.0;
 
     pushesCan = false;
@@ -324,37 +332,22 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
 
 void checkDirection(geometry_msgs::Twist &msg, int r)
 {
-    float minLeft = regionDistance(M_PI/2.0, 3.0*M_PI/10.0, r);
-    float minLeftFront = regionDistance(3.0*M_PI/10.0, M_PI/10.0, r);
-    float minFront = regionDistance(M_PI/10.0, -M_PI/10.0, r);
-    float minRightFront = regionDistance(-M_PI/10.0, -3.0*M_PI/10.0, r);
-    float minRight = regionDistance(-3.0*M_PI/10.0, -M_PI/2.0, r);
-    float direction = 0.0;
+    float minRight = regionDistance(M_PI*(11.0/8.0), M_PI*(13.0/8.0), r);
+    float minRightFront = regionDistance(M_PI*(13.0/8.0), M_PI*(15.0/8.0), r);
+    float minFront1 = regionDistance(M_PI*(15.0/8.0), M_PI*(16.0/8.0), r);
+    float minFront2 = regionDistance(M_PI*(0.0/8.0), M_PI*(1.0/8.0), r);
+    float minLeftFront = regionDistance(M_PI*(1.0/8.0), M_PI*(3.0/8.0), r);
+    float minLeft = regionDistance(M_PI*(3.0/8.0), M_PI*(5.0/8.0), r);
+    float minFront = std::min(minFront1,minFront2);
 
-    if(minFront < 6.0 &&
-       minFront < minLeftFront &&
-       minFront < minRightFront &&
-       minFront < minLeft &&
-       minFront < minRight)
-        ROS_INFO("Front: %f", minFront);
+    ROS_INFO("Front: %f", minFront);
+    ROS_INFO("Front1: %f", minFront1);
+    ROS_INFO("Front2: %f", minFront2);
+    ROS_INFO("LeftFront: %f", minLeftFront);
+    ROS_INFO("RightFront: %f", minRightFront);
+    ROS_INFO("Left: %f", minLeft);
+    ROS_INFO("Right: %f", minRight);
 
-    else if(minLeftFront < 6.0 &&
-            minLeftFront < minRightFront &&
-            minLeftFront < minLeft &&
-            minLeftFront < minRight)
-        ROS_INFO("LeftFront: %f", minLeftFront);
-
-    else if(minRightFront < 6.0 &&
-            minLeftFront < minLeft &&
-            minLeftFront < minRight)
-        ROS_INFO("RightFront: %f", minRightFront);
-
-    else if(minLeft < 6.0 &&
-            minLeft < minRight)
-        ROS_INFO("Left: %f", minLeft);
-
-    else if(minRight < 6.0)
-        ROS_INFO("Right: %f", minRight);
 
 }
 
@@ -392,34 +385,42 @@ int main(int argc, char **argv) {
    */
 	//TESTA ATT SKICKA ETT geometry_message med twist
   pub = n.advertise<gazebo_msgs::ModelState>("/gazebo/set_model_state",
-					  1000);
+                                          3);
+
+  movement_pub_rob1 = n.advertise<geometry_msgs::Twist>("/robot1/cmd_vel", 3);
+
+  movement_pub_rob2 = n.advertise<geometry_msgs::Twist>("/robot2/cmd_vel", 3);
 
   // Start the ROS main loop
   ros::Rate loop_rate(100);
   while (ros::ok()) {
 
         gazebo_msgs::ModelState vel, vel2;
+        geometry_msgs::Twist rob1, rob2;
         vel.model_name = "turtlebot3_burger";
         vel.reference_frame = "turtlebot3_burger";
-        vel.twist.linear.x = 0.5;
-        vel.twist.angular.z = 0.4;
-        //avoid(vel.twist,0);
-        //chaseCan(vel.twist,2);
-        checkDirection(vel.twist,2);
+        //vel.twist.linear.x = 0.5;
+        //vel.twist.angular.z = 0.4;
+        rob1.linear.x = 0.5;
+        rob1.angular.z = 0.4;
+        avoid(rob1,0);
+        chaseCan(rob1,2);
+        //checkDirection(rob1,2);
 
         vel2.model_name = "turtlebot3_burger1";
         vel2.reference_frame = "turtlebot3_burger1";
-        vel2.twist.linear.x = 0.5;
-        vel2.twist.angular.z = 0.4;
-        //avoid(vel2.twist,1);
-        //chaseCan(vel2.twist,3);
-
+        rob2.linear.x = 0.5;
+        rob2.angular.z = 0.4;
+        avoid(rob2,1);
+        chaseCan(rob2,3);
     /**
      * Calls poseCallback once for each iteration.
      */
-
+    movement_pub_rob1.publish(rob1);
+    movement_pub_rob2.publish(rob2);
     ros::spinOnce();
     loop_rate.sleep();
+
     //pub.publish(vel);
     //pub.publish(vel2);
 
