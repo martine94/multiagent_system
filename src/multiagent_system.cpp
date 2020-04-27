@@ -152,7 +152,7 @@ bool avoid(geometry_msgs::Twist &msg, int r) {
               msg.angular.z = direction;
               ROS_INFO("Start Truning");
           }
-          msg.angular.z = msg.angular.z*10;
+          //msg.angular.z = msg.angular.z*10;
           return false;
       }
       if(minLeftFront < 0.9) {
@@ -176,7 +176,7 @@ bool avoid(geometry_msgs::Twist &msg, int r) {
               msg.angular.z = -0.2;
               ROS_INFO("Start Truning");
           }
-          msg.angular.z = msg.angular.z*10;
+          //msg.angular.z = msg.angular.z*10;
           return false;
       }
       if(minRightFront < 0.9) {
@@ -200,7 +200,7 @@ bool avoid(geometry_msgs::Twist &msg, int r) {
               msg.angular.z = 0.2;
               ROS_INFO("Start Truning");
           }
-          msg.angular.z = msg.angular.z*10;
+          //msg.angular.z = msg.angular.z*10;
           return false;
       }
       if(minLeft < 0.5) {
@@ -209,7 +209,7 @@ bool avoid(geometry_msgs::Twist &msg, int r) {
           msg.linear.x = 0.1;
           msg.angular.z = -0.2;
           ROS_INFO("TURN");
-          msg.angular.z = msg.angular.z*10;
+          //msg.angular.z = msg.angular.z*10;
           return false;
       }
       if(minRight < 0.5) {
@@ -218,11 +218,11 @@ bool avoid(geometry_msgs::Twist &msg, int r) {
           msg.linear.x = 0.1;
           msg.angular.z = 0.2;
           ROS_INFO("TURN");
-          msg.angular.z = msg.angular.z*10;
+          //msg.angular.z = msg.angular.z*10;
           return false;
       }
       lock = false;
-      msg.angular.z = msg.angular.z*10;
+      //msg.angular.z = msg.angular.z*10;
       return false;
   }
 
@@ -236,7 +236,7 @@ bool sortCan(int r)
     float minLeft = regionDistance(M_PI*(3.0/8.0), M_PI*(5.0/8.0), r);
     float minFront = std::min(minFront1,minFront2);
 
-    if(minLeftFront < 0.2 && minRightFront < 0.2)
+    if(minLeft < 0.2 && minRight < 0.2)
     {
         ROS_INFO("Can In Place");
        return true;
@@ -280,8 +280,8 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
     if(chaseLock)
     {
         ROS_INFO("Can in Place ChaseCan");
-        msg.linear.x = -1.0;
-        msg.angular.z = 0.7;
+        msg.linear.x = -0.5;
+        msg.angular.z = 0.2;
         return false;
     }
     float minRight = regionDistance(M_PI*(11.0/8.0), M_PI*(13.0/8.0), r);
@@ -295,36 +295,39 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
 
     pushesCan = false;
 
-    if(minFront < 0.5)
+    if(minFront < 1.0)
     {
         direction = 0.0;
         ROS_INFO("Pushes Can %d", r);
+        msg.linear.x = 0.4;
         pushesCan = true;
     }
-    else if(minLeftFront < 0.3 && minLeftFront < minFront)
+    else if(minLeftFront < 1.0)
     {
-        direction = 3.0;
-        msg.linear.x = 0.0;
+        direction = 0.2;
+        msg.linear.x = 0.1;
         ROS_INFO("Targeting Can LeftFront %d", r);
     }
-    else if(minRightFront < 0.3 && minRightFront < minFront)
+    else if(minRightFront < 1.0)
     {
-        direction = -3.0;
-        msg.linear.x = 0.0;
+        direction = -0.2;
+        msg.linear.x = 0.1;
         ROS_INFO("Targeting Can RightFront %d", r);
     }
-    else if(minLeft < 0.3 && minLeftFront < minFront)
+    else if(minLeft < 1.0)
     {
-        direction = 7.0;
+        direction = 0.3;
         msg.linear.x = 0.0;
         ROS_INFO("Targeting Can Left %d", r);
     }
-    else if(minRight < 0.3 && minRightFront < minFront)
+    else if(minRight < 1.0)
     {
-        direction = -7.0;
+        direction = -0.3;
         msg.linear.x = 0.0;
         ROS_INFO("Targeting Can Right %d", r);
     }
+    else
+        direction = msg.angular.z;
 
     msg.angular.z = direction;
     return false;
@@ -333,10 +336,10 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
 void checkDirection(geometry_msgs::Twist &msg, int r)
 {
     float minRight = regionDistance(M_PI*(11.0/8.0), M_PI*(13.0/8.0), r);
-    float minRightFront = regionDistance(M_PI*(13.0/8.0), M_PI*(15.0/8.0), r);
-    float minFront1 = regionDistance(M_PI*(15.0/8.0), M_PI*(16.0/8.0), r);
-    float minFront2 = regionDistance(M_PI*(0.0/8.0), M_PI*(1.0/8.0), r);
-    float minLeftFront = regionDistance(M_PI*(1.0/8.0), M_PI*(3.0/8.0), r);
+    float minRightFront = regionDistance(M_PI*(13.0/8.0), M_PI*(15.5/8.0), r);
+    float minFront1 = regionDistance(M_PI*(15.5/8.0), M_PI*(16.0/8.0), r);
+    float minFront2 = regionDistance(M_PI*(0.0/8.0), M_PI*(0.5/8.0), r);
+    float minLeftFront = regionDistance(M_PI*(0.5/8.0), M_PI*(3.0/8.0), r);
     float minLeft = regionDistance(M_PI*(3.0/8.0), M_PI*(5.0/8.0), r);
     float minFront = std::min(minFront1,minFront2);
 
@@ -401,16 +404,16 @@ int main(int argc, char **argv) {
         vel.reference_frame = "turtlebot3_burger";
         //vel.twist.linear.x = 0.5;
         //vel.twist.angular.z = 0.4;
-        rob1.linear.x = 0.5;
-        rob1.angular.z = 0.4;
+        rob1.linear.x = 0.4;
+        rob1.angular.z = 0.1;
         avoid(rob1,0);
         chaseCan(rob1,2);
         //checkDirection(rob1,2);
 
         vel2.model_name = "turtlebot3_burger1";
         vel2.reference_frame = "turtlebot3_burger1";
-        rob2.linear.x = 0.5;
-        rob2.angular.z = 0.4;
+        rob2.linear.x = 0.4;
+        rob2.angular.z = 0.1;
         avoid(rob2,1);
         chaseCan(rob2,3);
     /**
