@@ -273,13 +273,13 @@ bool sortCan(int r)
             canInPlace2 = true;
     }
 
-    if(r == 0 && canInPlace1 && minLeftFront < 2.0 && minRightFront < 2.0)
+    if(r == 0 && canInPlace1 && (minLeftFront < 2.0 || minRightFront < 2.0 || minFront < 2.0))
     {
         ROS_INFO("Backing Away From Can");
         backing1 = true;
         return true;
     }
-    if(r == 1 && canInPlace2 && minLeftFront < 2.0 && minRightFront < 2.0)
+    if(r == 1 && canInPlace2 && (minLeftFront < 2.0 || minRightFront < 2.0 || minFront < 2.0))
     {
         ROS_INFO("Backing Away From Can");
         backing2 = true;
@@ -322,36 +322,68 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
 
     pushesCan = false;
 
-    if(minFront < 0.3 || (minFront < 1.0 && minFrontWall > minFront+0.5 && minFront+0.5 < minLeftFront && minFront+0.5 < minRightFront))
+    if(minFront < 0.3 && minFront+0.5 < minFrontWall && minFront+0.5 < minLeftFrontWall && minFront+0.5 < minRightFrontWall)
     {
         direction = 0.0;
         ROS_INFO("Pushes Can %d", r);
         msg.linear.x = 0.4;
         //pushesCan = true;
     }
-    else if(minLeftFront < 1.0 && minLeftFrontWall > minLeftFront+0.5 && minLeftFront < minFront+0.1)
+    else if(minLeftFront < 1.0 && minLeftFront+1.0 < minLeftFrontWall && minLeftFront < minFront+0.5)
     {
-        direction = 0.3;
-        msg.linear.x = 0.0;
-        ROS_INFO("Targeting Can LeftFront %d", r);
+        if(minLeftFront < 0.2)
+        {
+            direction = 0.0;
+            msg.linear.x = -0.4;
+        }
+        else
+        {
+            direction = 0.3;
+            msg.linear.x = 0.0;
+            ROS_INFO("Targeting Can LeftFront %d", r);
+        }
     }
-    else if(minRightFront < 1.0 && minRightFrontWall > minRightFront+0.5 && minRightFront < minFront+0.1)
+    else if(minRightFront < 1.0 && minRightFront+1.0 < minRightFrontWall && minRightFront < minFront+0.5)
     {
-        direction = -0.3;
-        msg.linear.x = 0.0;
-        ROS_INFO("Targeting Can RightFront %d", r);
+        if(minRightFront < 0.2)
+        {
+            direction = 0.0;
+            msg.linear.x = -0.4;
+        }
+        else
+        {
+            direction = -0.3;
+            msg.linear.x = 0.0;
+            ROS_INFO("Targeting Can RightFront %d", r);
+        }
     }
-    else if(minLeft < 1.0 && minLeftWall > minLeft+0.5)
+    else if(minLeft < 1.0 && minLeft+0.5 < minLeftWall )
     {
-        direction = 0.5;
-        msg.linear.x = 0.0;
-        ROS_INFO("Targeting Can Left %d", r);
+        if(minLeft < 0.2)
+        {
+            direction = 0.0;
+            msg.linear.x = -0.4;
+        }
+        else
+        {
+            direction = 0.5;
+            msg.linear.x = 0.0;
+            ROS_INFO("Targeting Can Left %d", r);
+        }
     }
-    else if(minRight < 1.0 && minRightWall > minRight+0.5)
+    else if(minRight < 1.0 && minRight+0.5 < minRightWall )
     {
-        direction = -0.5;
-        msg.linear.x = 0.0;
-        ROS_INFO("Targeting Can Right %d", r);
+        if(minRight < 0.2)
+        {
+            direction = 0.0;
+            msg.linear.x = -0.4;
+        }
+        else
+        {
+            direction = -0.5;
+            msg.linear.x = 0.0;
+            ROS_INFO("Targeting Can Right %d", r);
+        }
     }
     else
         direction = msg.angular.z;
@@ -412,7 +444,7 @@ int main(int argc, char **argv) {
         //vel.twist.angular.z = 0.4;
 
         rob1.linear.x = 0.4;
-        rob1.angular.z = 0.1;
+        rob1.angular.z = 0.3;
         chaseCan(rob1,2);
         if(!backing1)
             avoid(rob1,0);
@@ -420,7 +452,7 @@ int main(int argc, char **argv) {
         vel2.model_name = "turtlebot3_burger1";
         vel2.reference_frame = "turtlebot3_burger1";
         rob2.linear.x = 0.4;
-        rob2.angular.z = 0.1;
+        rob2.angular.z = 0.3;
         chaseCan(rob2,3);
         if(!backing2)
             avoid(rob2,1);

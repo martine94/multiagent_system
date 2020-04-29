@@ -23,9 +23,9 @@
       </model>
       <pose>0 0 0 0 0 0</pose>
       <box>
-        <size>4 4 0.01</size>
+        <size>3 3 0.01</size>
       </box>
-      <model_count>10</model_count>
+      <model_count>15</model_count>
       <distribution>
         <type>random</type>
       </distribution>
@@ -65,7 +65,7 @@
       </distribution>
     </population>
     -->
-    
+    <!--
     <population name="can_population3">
       <model name="can3">
         <include>
@@ -82,7 +82,7 @@
         <type>random</type>
       </distribution>
     </population>
-    
+    -->
     <!--
     <population name="can_population4">
       <model name="can4">
@@ -153,22 +153,22 @@
     </population>
     -->
     
- <model name='block'>
-    <pose frame=''>0 0 0 0 -0 0</pose>
+ <model name='Block'>
+    <pose frame=''>0 0 0 0 0 0</pose>
     <link name='Wall_0'>
       <collision name='Wall_0_Collision'>
         <geometry>
           <box>
-            <size>7 0.15 1.0</size>
+            <size>5 0.15 0.5</size>
           </box>
         </geometry>
-        <pose frame=''>0 0 0.5 0 -0 0</pose>
+        <pose frame=''>0 0 0.25 0 -0 0</pose>
       </collision>
       <visual name='Wall_0_Visual'>
-        <pose frame=''>0 0 0.5 0 -0 0</pose>
+        <pose frame=''>0 0 0.25 0 -0 0</pose>
         <geometry>
           <box>
-            <size>7 0.15 1.0</size>
+            <size>5 0.15 0.5</size>
           </box>
         </geometry>
         <material>
@@ -179,22 +179,22 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose frame=''>-3.425 0 0 0 0 -1.5708</pose>
+      <pose frame=''>-2.425 0 0 0 -0 1.5708</pose>
     </link>
     <link name='Wall_1'>
       <collision name='Wall_1_Collision'>
         <geometry>
           <box>
-            <size>7 0.15 1.0</size>
+            <size>5 0.15 0.5</size>
           </box>
         </geometry>
-        <pose frame=''>0 0 0.5 0 -0 0</pose>
+        <pose frame=''>0 0 0.25 0 -0 0</pose>
       </collision>
       <visual name='Wall_1_Visual'>
-        <pose frame=''>0 0 0.5 0 -0 0</pose>
+        <pose frame=''>0 0 0.25 0 -0 0</pose>
         <geometry>
           <box>
-            <size>7 0.15 1.0</size>
+            <size>5 0.15 0.5</size>
           </box>
         </geometry>
         <material>
@@ -205,22 +205,22 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose frame=''>0 -3.425 0 0 -0 0</pose>
+      <pose frame=''>0 2.425 0 0 -0 0</pose>
     </link>
     <link name='Wall_2'>
       <collision name='Wall_2_Collision'>
         <geometry>
           <box>
-            <size>7 0.15 1.0</size>
+            <size>5 0.15 0.5</size>
           </box>
         </geometry>
-        <pose frame=''>0 0 0.5 0 -0 0</pose>
+        <pose frame=''>0 0 0.25 0 -0 0</pose>
       </collision>
       <visual name='Wall_2_Visual'>
-        <pose frame=''>0 0 0.5 0 -0 0</pose>
+        <pose frame=''>0 0 0.25 0 -0 0</pose>
         <geometry>
           <box>
-            <size>7 0.15 1.0</size>
+            <size>5 0.15 0.5</size>
           </box>
         </geometry>
         <material>
@@ -231,22 +231,22 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose frame=''>3.425 0 0 0 -0 1.5708</pose>
+      <pose frame=''>2.425 0 0 0 0 -1.5708</pose>
     </link>
     <link name='Wall_3'>
       <collision name='Wall_3_Collision'>
         <geometry>
           <box>
-            <size>7 0.15 1.0</size>
+            <size>5 0.15 2.5</size>
           </box>
         </geometry>
-        <pose frame=''>0 0 0.5 0 -0 0</pose>
+        <pose frame=''>0 0 0.25 0 -0 0</pose>
       </collision>
       <visual name='Wall_3_Visual'>
-        <pose frame=''>0 0 0.5 0 -0 0</pose>
+        <pose frame=''>0 0 0.25 0 -0 0</pose>
         <geometry>
           <box>
-            <size>7 0.15 1.0</size>
+            <size>5 0.15 0.5</size>
           </box>
         </geometry>
         <material>
@@ -257,7 +257,7 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose frame=''>0 3.425 0 0 -0 3.14159</pose>
+      <pose frame=''>0 -2.425 0 0 -0 3.14159</pose>
     </link>
     <static>1</static>
   </model>
