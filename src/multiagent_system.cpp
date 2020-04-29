@@ -273,13 +273,13 @@ bool sortCan(int r)
             canInPlace2 = true;
     }
 
-    if(r == 0 && canInPlace1 && minLeftFront < 2.0 && minRightFront < 2.0)
+    if(r == 0 && canInPlace1 && (minFront < 2.0 || minLeftFront < 2.0 || minRightFront < 2.0 ))
     {
         ROS_INFO("Backing Away From Can");
         backing1 = true;
         return true;
     }
-    if(r == 1 && canInPlace2 && minLeftFront < 2.0 && minRightFront < 2.0)
+    if(r == 1 && canInPlace2 && (minFront < 2.0 || minLeftFront < 2.0 || minRightFront < 2.0))
     {
         ROS_INFO("Backing Away From Can");
         backing2 = true;
@@ -322,7 +322,7 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
 
     pushesCan = false;
 
-    if(minFront < 0.3 || (minFront < 1.0 && minFrontWall > minFront+0.5 && minFront+0.5 < minLeftFront && minFront+0.5 < minRightFront))
+    if(minFront < 0.3 || (minFront < 1.0 && minFront+0.5 < minFrontWall && minFront+0.5))// < minLeftFront && minFront+0.5 < minRightFront))
     {
         direction = 0.0;
         ROS_INFO("Pushes Can %d", r);
@@ -373,7 +373,7 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
     }
     else if(minRight < 1.0 && minRightWall > minRight+0.5)
     {
-        if(minLeft < 0.2)
+        if(minRight < 0.2)
         {
             direction = 0.0;
             msg.linear.x = -0.4;
