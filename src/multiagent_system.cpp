@@ -127,6 +127,7 @@ void checkDirection(std::vector<float>& sensorValues, int r)
     float minFront2 = regionDistance(M_PI*(0.0/8.0), M_PI*(0.5/8.0), r);
     float minLeftFront = regionDistance(M_PI*(0.5/8.0), M_PI*(2.0/8.0), r);
     float minLeft = regionDistance(M_PI*(2.0/8.0), M_PI*(4.0/8.0), r);
+    float minBehind = regionDistance(M_PI*(6.0/8.0), M_PI*(10.0/8.0), r);
     float minFront = std::min(minFront1,minFront2);
 
     sensorValues[0] = minLeft;
@@ -134,6 +135,7 @@ void checkDirection(std::vector<float>& sensorValues, int r)
     sensorValues[2] = minFront;
     sensorValues[3] = minRightFront;
     sensorValues[4] = minRight;
+    sensorValues[5] = minBehind;
 /*
     ROS_INFO("Front: %f", minFront);
     ROS_INFO("Front1: %f", minFront1);
@@ -147,7 +149,7 @@ void checkDirection(std::vector<float>& sensorValues, int r)
 
 
 bool avoid(geometry_msgs::Twist &msg, int r) {
-    std::vector<float> sensorBox(5);
+    std::vector<float> sensorBox(6);
     checkDirection(sensorBox, r);
     float minLeft = sensorBox[0], minLeftFront = sensorBox[1], minFront = sensorBox[2],
             minRightFront = sensorBox[3], minRight = sensorBox[4];
@@ -255,10 +257,10 @@ bool avoid(geometry_msgs::Twist &msg, int r) {
 
 bool sortCan(int r)
 {
-    std::vector<float> sensorWall(5);
+    std::vector<float> sensorWall(6);
     checkDirection(sensorWall, r);
     float minLeft = sensorWall[0], minLeftFront = sensorWall[1], minFront = sensorWall[2],
-            minRightFront = sensorWall[3], minRight = sensorWall[4];
+            minRightFront = sensorWall[3], minRight = sensorWall[4], minBackWall = sensorWall[5];
     ROS_INFO("SRTCAN");
     ROS_INFO("Front: %f", minFront);
     ROS_INFO("minLeftFront: %f", minLeftFront);
@@ -273,13 +275,13 @@ bool sortCan(int r)
             canInPlace2 = true;
     }
 
-    if(r == 0 && canInPlace1 && (minFront < 2.0 || minLeftFront < 2.0 || minRightFront < 2.0 ))
+    if(r == 0 && canInPlace1 && (minFront < 2.0 || minLeftFront < 2.0 || minRightFront < 2.0 ) && minBackWall > 0.3)
     {
         ROS_INFO("Backing Away From Can");
         backing1 = true;
         return true;
     }
-    if(r == 1 && canInPlace2 && (minFront < 2.0 || minLeftFront < 2.0 || minRightFront < 2.0))
+    if(r == 1 && canInPlace2 && (minFront < 2.0 || minLeftFront < 2.0 || minRightFront < 2.0) && minBackWall > 0.3)
     {
         ROS_INFO("Backing Away From Can");
         backing2 = true;
@@ -296,7 +298,7 @@ bool sortCan(int r)
 bool chaseCan(geometry_msgs::Twist &msg, int r)
 {
     float direction = 0.0;
-    std::vector<float> sensorWall(5), sensorBox(5);
+    std::vector<float> sensorWall(6), sensorBox(6);
     checkDirection(sensorBox, r);
     checkDirection(sensorWall, r-2);
     float minLeft = sensorBox[0], minLeftFront = sensorBox[1], minFront = sensorBox[2],
@@ -322,7 +324,7 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
 
     pushesCan = false;
 
-    if(minFront < 0.3 || (minFront < 1.0 && minFront+0.5 < minFrontWall && minFront+0.5))// < minLeftFront && minFront+0.5 < minRightFront))
+    if(minFront < 0.3 || (minFront < 1.0 && minFront+0.5 < minFrontWall))// && minFront+0.5 < minLeftFront && minFront+0.5 < minRightFront))
     {
         direction = 0.0;
         ROS_INFO("Pushes Can %d", r);
