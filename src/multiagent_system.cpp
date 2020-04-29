@@ -159,92 +159,92 @@ bool avoid(geometry_msgs::Twist &msg, int r) {
               direction = 0.3;
 
           lock = true;
-          ROS_INFO("WALL FRONT");
-          ROS_INFO("%f", minFront);
+          //ROS_INFO("WALL FRONT");
+          //ROS_INFO("%f", minFront);
           if(minFront < 0.3) {
               if(minFront < 0.2) {
                   msg.linear.x = 0.0;
                   msg.angular.z = direction;
-                  ROS_INFO("TURN");
+                  //ROS_INFO("TURN");
               }
               else {
                   msg.linear.x = 0.1;
                   msg.angular.z = direction;
-                  ROS_INFO("Move slow while Turn");
+                  //ROS_INFO("Move slow while Turn");
               }
           }
           else
           {
               msg.linear.x = 0.1;
               msg.angular.z = direction;
-              ROS_INFO("Start Truning");
+              //ROS_INFO("Start Truning");
           }
           //msg.angular.z = msg.angular.z*10;
           return false;
       }
       if(minLeftFront < 0.4) {
           lock = true;
-          ROS_INFO("WALL LEFTFRONT");
+          //ROS_INFO("WALL LEFTFRONT");
           if(minLeftFront < 0.2) {
               if(minLeftFront < 0.25) {
                   msg.linear.x = 0.0;
                   msg.angular.z = -0.3;
-                  ROS_INFO("TURN");
+                  //ROS_INFO("TURN");
               }
               else {
                   msg.linear.x = 0.1;
                   msg.angular.z = -0.3;
-                  ROS_INFO("Move slow while Turn");
+                  //ROS_INFO("Move slow while Turn");
               }
           }
           else
           {
               msg.linear.x = 0.1;
               msg.angular.z = -0.3;
-              ROS_INFO("Start Truning");
+              //ROS_INFO("Start Truning");
           }
           //msg.angular.z = msg.angular.z*10;
           return false;
       }
       if(minRightFront < 0.4) {
           lock = true;
-          ROS_INFO("WALL RIGHTFRONT");
+          //ROS_INFO("WALL RIGHTFRONT");
           if(minRightFront < 0.2) {
               if(minRightFront < 0.5) {
                   msg.linear.x = 0.0;
                   msg.angular.z = 0.3;
-                  ROS_INFO("TURN");
+                  //ROS_INFO("TURN");
               }
               else {
                   msg.linear.x = 0.1;
                   msg.angular.z = 0.3;
-                  ROS_INFO("Move slow while Turn");
+                  //ROS_INFO("Move slow while Turn");
               }
           }
           else
           {
               msg.linear.x = 0.1;
               msg.angular.z = 0.3;
-              ROS_INFO("Start Truning");
+              //ROS_INFO("Start Truning");
           }
           //msg.angular.z = msg.angular.z*10;
           return false;
       }
       if(minLeft < 0.1) {
           lock = true;
-          ROS_INFO("WALL LEFT");
+          //ROS_INFO("WALL LEFT");
           msg.linear.x = 0.1;
           msg.angular.z = -0.3;
-          ROS_INFO("TURN");
+          //ROS_INFO("TURN");
           //msg.angular.z = msg.angular.z*10;
           return false;
       }
       if(minRight < 0.1) {
           lock = true;
-          ROS_INFO("WALL RIGHT");
+          //ROS_INFO("WALL RIGHT");
           msg.linear.x = 0.1;
           msg.angular.z = 0.3;
-          ROS_INFO("TURN");
+          //ROS_INFO("TURN");
           //msg.angular.z = msg.angular.z*10;
           return false;
       }
@@ -273,13 +273,13 @@ bool sortCan(int r)
             canInPlace2 = true;
     }
 
-    if(r == 0 && canInPlace1 && (minLeftFront < 2.0 || minRightFront < 2.0 || minFront < 2.0))
+    if(r == 0 && canInPlace1 && minLeftFront < 2.0 && minRightFront < 2.0)
     {
         ROS_INFO("Backing Away From Can");
         backing1 = true;
         return true;
     }
-    if(r == 1 && canInPlace2 && (minLeftFront < 2.0 || minRightFront < 2.0 || minFront < 2.0))
+    if(r == 1 && canInPlace2 && minLeftFront < 2.0 && minRightFront < 2.0)
     {
         ROS_INFO("Backing Away From Can");
         backing2 = true;
@@ -322,14 +322,14 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
 
     pushesCan = false;
 
-    if(minFront < 0.3 && minFront+0.5 < minFrontWall && minFront+0.5 < minLeftFrontWall && minFront+0.5 < minRightFrontWall)
+    if(minFront < 0.3 || (minFront < 1.0 && minFrontWall > minFront+0.5 && minFront+0.5 < minLeftFront && minFront+0.5 < minRightFront))
     {
         direction = 0.0;
         ROS_INFO("Pushes Can %d", r);
         msg.linear.x = 0.4;
         //pushesCan = true;
     }
-    else if(minLeftFront < 1.0 && minLeftFront+1.0 < minLeftFrontWall && minLeftFront < minFront+0.5)
+    else if(minLeftFront < 1.0 && minLeftFrontWall > minLeftFront+0.5 && minLeftFront < minFront+0.1)
     {
         if(minLeftFront < 0.2)
         {
@@ -343,7 +343,7 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
             ROS_INFO("Targeting Can LeftFront %d", r);
         }
     }
-    else if(minRightFront < 1.0 && minRightFront+1.0 < minRightFrontWall && minRightFront < minFront+0.5)
+    else if(minRightFront < 1.0 && minRightFrontWall > minRightFront+0.5 && minRightFront < minFront+0.1)
     {
         if(minRightFront < 0.2)
         {
@@ -357,7 +357,7 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
             ROS_INFO("Targeting Can RightFront %d", r);
         }
     }
-    else if(minLeft < 1.0 && minLeft+0.5 < minLeftWall )
+    else if(minLeft < 1.0 && minLeftWall > minLeft+0.5)
     {
         if(minLeft < 0.2)
         {
@@ -371,9 +371,9 @@ bool chaseCan(geometry_msgs::Twist &msg, int r)
             ROS_INFO("Targeting Can Left %d", r);
         }
     }
-    else if(minRight < 1.0 && minRight+0.5 < minRightWall )
+    else if(minRight < 1.0 && minRightWall > minRight+0.5)
     {
-        if(minRight < 0.2)
+        if(minLeft < 0.2)
         {
             direction = 0.0;
             msg.linear.x = -0.4;
