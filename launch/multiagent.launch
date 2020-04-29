@@ -9,6 +9,12 @@
   <arg name="y" default="0.0"/>
   <arg name="z" default="0.0"/>
   <arg name="yaw" default="3.14"/>
+  
+  <arg name="model2" default="burger" doc="model type [burger, waffle, waffle_pi]"/>
+  <arg name="x2" default="0.0"/>
+  <arg name="y2" default="0.5"/>
+  <arg name="z2" default="0.0"/>
+  <arg name="yaw2" default="1.57"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find multiagent_system)/model_population/can_wood_population.world"/>
@@ -19,6 +25,7 @@
     <arg name="debug" value="false"/>
   </include>
 
+  <!-- BEGIN ROBOT 1-->
   <group ns="robot1">
         <param name="tf_prefix" value="robot1_tf" />
         <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
@@ -30,5 +37,12 @@
         <param name="tf_prefix" value="robot2_tf" />
         <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
       	<node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf1" args="-urdf -model turtlebot3_$(arg model)1 -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw) -param 		robot_description" />
+   </group>
+   
+   <!-- BEGIN ROBOT 3-->
+   <group ns="robot3">
+        <param name="tf_prefix" value="robot3_tf" />
+        <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+      	<node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf1" args="-urdf -model turtlebot3_$(arg model)2 -x $(arg x2) -y $(arg y2) -z $(arg z2) -Y $(arg yaw2) -param 		robot_description" />
    </group>
 </launch>

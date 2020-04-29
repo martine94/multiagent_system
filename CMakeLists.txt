@@ -206,5 +206,5 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-add_executable(multiagent_system src/multiagent_system.cpp)
+add_executable(multiagent_system src/multiagent_system_clean.cpp)
 target_link_libraries(multiagent_system ${catkin_LIBRARIES})
