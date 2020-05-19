@@ -6,6 +6,7 @@
 #include "sensor_msgs/LaserScan.h"
 #include "multiagent_system/boxesList.h"
 #include "multiagent_system/auction.h"
+#include "multiagent_system/jobStatus.h"
 
 #include <math.h>
 #include <algorithm>
@@ -62,11 +63,14 @@ public:
     void initPiccolos(std::string topicNameSub, std::string topicNamePub, int rID);
     void springPiccolo();
     void work9To5();
+    void reset();
     void executeCommandCallback();
     // Node handler publisher and subscriber
-    ros::Publisher bidPub;                                                              //bidMsg
+    ros::Publisher bidPub, jobPub;                                                              //bidMsg
     ros::Subscriber boxLocationSub, reciveCommandedSub;
     //ros::ServiceServer service;
+
+    multiagent_system::jobStatus jobReport;
 
     int robotID;
     bool pushingBox = false;
@@ -84,12 +88,19 @@ public:
     void giveCommand(const multiagent_system::auction& Picco);                                  //reciveMsg
     void springLegolas();
     void bidCallback(const multiagent_system::auction::ConstPtr& robotmsg);                              //bidMsg
+    void jobStatusCallback(const multiagent_system::jobStatus::ConstPtr& msg);
 
     // Node handler publisher and subscriber
     ros::Publisher boxLocationPub, currPicc, auctionBoxesPub;                                            //reciveMsg
-    ros::Subscriber bidSub;
+    ros::Subscriber bidSub, jobSub;
 
     multiagent_system::auction Picco1, Picco2, Picco3;
+
+    struct PiccoloChord
+    {
+        int succesful = 0;
+        int failed = 0;
+    } PiccoloRobot1, PiccoloRobot2, PiccoloRobot3;
 };
 
 
@@ -314,7 +325,7 @@ bool Agent::avoid(geometry_msgs::Twist &msg, int r)
     }
     this->looked = false;
     msg.linear.x = 0.3;
-    msg.angular.z = 0.2;
+    msg.angular.z = 0.4;
     //msg.angular.z = msg.angular.z*10;
     return false;
 }
@@ -369,7 +380,7 @@ bool Agent::chaseCan(geometry_msgs::Twist &msg)
     if(chaseLock)
     {
         //ROS_INFO("Can in Place ChaseCan");
-        msg.linear.x = -0.5;
+        msg.linear.x = -0.3;
         msg.angular.z = 0.0;
         return false;
     }
@@ -378,7 +389,7 @@ bool Agent::chaseCan(geometry_msgs::Twist &msg)
     {
         direction = 0.0;
         //ROS_INFO("Pushes Can");
-        msg.linear.x = 0.4;
+        msg.linear.x = 0.2;
         //pushesCan = true;
     }
     else if(minLeftFront < 1.0 && minLeftFrontWall > minLeftFront+0.5 && minLeftFront < minFront+0.1)
@@ -386,7 +397,7 @@ bool Agent::chaseCan(geometry_msgs::Twist &msg)
         if(minLeftFront < 0.2)
         {
             direction = 0.0;
-            msg.linear.x = -0.4;
+            msg.linear.x = -0.2;
         }
         else
         {
@@ -400,11 +411,11 @@ bool Agent::chaseCan(geometry_msgs::Twist &msg)
         if(minRightFront < 0.2)
         {
             direction = 0.0;
-            msg.linear.x = -0.4;
+            msg.linear.x = -0.2;
         }
         else
         {
-            direction = -0.3;
+            direction = -0.1;
             msg.linear.x = 0.0;
             //ROS_INFO("Targeting Can RightFront");
         }
@@ -414,11 +425,11 @@ bool Agent::chaseCan(geometry_msgs::Twist &msg)
         if(minLeft < 0.2)
         {
             direction = 0.0;
-            msg.linear.x = -0.4;
+            msg.linear.x = -0.2;
         }
         else
         {
-            direction = 0.5;
+            direction = 0.3;
             msg.linear.x = 0.0;
             //ROS_INFO("Targeting Can Left");
         }
@@ -428,11 +439,11 @@ bool Agent::chaseCan(geometry_msgs::Twist &msg)
         if(minRight < 0.2)
         {
             direction = 0.0;
-            msg.linear.x = -0.4;
+            msg.linear.x = -0.2;
         }
         else
         {
-            direction = -0.5;
+            direction = -0.3;
             msg.linear.x = 0.0;
             //ROS_INFO("Targeting Can Right");
         }
@@ -451,6 +462,7 @@ void Legolas::initLegolas(Piccolos slave1, Piccolos slave2, Piccolos slave3)
     this->init("/Legolas");
     bidSub = n.subscribe("/Piccolo/bids/", 0, &Legolas::bidCallback,this);
     boxLocationPub = n.advertise<multiagent_system::boxesList>("/Legolas/BoxLocation/", 3);
+    jobSub = n.subscribe("/PiccoloStatus/", 0, &Legolas::jobStatusCallback,this);
     /*this->Picco1 = slave1.getPose();
     this->Picco2 = slave1.getPose();
     this->Picco3 = slave1.getPose();*/
@@ -468,6 +480,27 @@ void Legolas::bidCallback(const multiagent_system::auction::ConstPtr &robotmsg) 
     else if(robotmsg->rID == 3)
         this->Picco3 = *robotmsg;
     ////ROS_INFO("bidCallback 2");
+}
+
+
+
+void Legolas::jobStatusCallback(const multiagent_system::jobStatus::ConstPtr& msg)
+{
+    if(msg->rID == 1)
+        if(msg->success == true)
+            this->PiccoloRobot1.succesful += 1;
+        else
+            this->PiccoloRobot1.failed += 1;
+    else if(msg->rID == 2)
+        if(msg->success == true)
+            this->PiccoloRobot2.succesful += 1;
+        else
+            this->PiccoloRobot2.failed += 1;
+    else if(msg->rID == 3)
+        if(msg->success == true)
+            this->PiccoloRobot3.succesful += 1;
+        else
+            this->PiccoloRobot3.failed += 1;
 }
 
 
@@ -512,11 +545,11 @@ void Legolas::locateBox()
         j++;
     }
     foundBoxes.data = items;
-    for(int i = 0; i < items.size(); i+=2)
-        ROS_INFO("Element%d: %.2f, %.2f",i, items[i], items[i+1]);
-    ROS_INFO("-----------------------");
+    //for(int i = 0; i < items.size(); i+=2)
+    //    ROS_INFO("Element%d: %.2f, %.2f",i, items[i], items[i+1]);
+    //ROS_INFO("-----------------------");
     if(!items.empty())
-        if(items[0] > 0.01 && items[1] > 0.01)
+        if(fabs(items[0]) > 0.01 && fabs(items[1]) > 0.01)
             this->boxLocationPub.publish(foundBoxes);
     }
     //ROS_INFO("locateBox 2");
@@ -526,13 +559,13 @@ void Legolas::dealer(multiagent_system::auction &Picco1, multiagent_system::auct
 {
     //ROS_INFO("dealer 1");
     if(Picco1.Position.position.x - Picco2.Position.position.x < 0.14 && Picco1.Position.position.y - Picco2.Position.position.y < 0.14)
-    //if(Picco1.boxItem == Picco2.boxItem)
-        if(Picco1.Score == std::min(Picco1.Score, Picco2.Score))
-            Picco2.Score = DoNotDriveValue;
-        else if(Picco2.Score == std::min(Picco1.Score,Picco2.Score))
+        //if(Picco1.Score == std::min(Picco1.Score, Picco2.Score))
+            //Picco2.Score = DoNotDriveValue;
+        if(Picco2.Score == std::min(Picco1.Score,Picco2.Score))
             Picco1.Score = DoNotDriveValue;
     if(Picco1.Score == DoNotDriveValue)
         Picco1.DoNotDrive = DoNotDriveValue;
+    //ROS_INFO("RID: %d, Score: %.2f, DND: %.2f", Picco1.rID, Picco1.Score, Picco1.DoNotDrive);
     //ROS_INFO("dealer 2");
 }
 
@@ -540,7 +573,7 @@ void Legolas::dealer(multiagent_system::auction &Picco1, multiagent_system::auct
 
 void Legolas::giveCommand(const multiagent_system::auction &Picco)              //reciveMsg
 {
-    //ROS_INFO("giveCommand %d", (int)Picco.orientation.x);
+    //ROS_INFO("giveCommand %d", Picco.rID);
     if(Picco.DoNotDrive != DoNotDriveValue && (int)Picco.rID >= 1 && (int)Picco.rID <= 3)
     {
         //ROS_INFO("weGotThIsMa8Te");
@@ -565,15 +598,27 @@ void Legolas::springLegolas()
     //ROS_INFO("springLegolas 1");
     this->locateBox();
     this->dealer(this->Picco1, this->Picco2);
-    this->dealer(this->Picco1, this->Picco3);
     this->dealer(this->Picco2, this->Picco3);
+    this->dealer(this->Picco3, this->Picco1);
     this->giveCommand(this->Picco1);
     this->giveCommand(this->Picco2);
     this->giveCommand(this->Picco3);
     this->avoid(this->robotVel, SensorBox);
-    this->robotVel.angular.z = this->robotVel.angular.z * 2;
+    this->robotVel.angular.z = this->robotVel.angular.z;
     this->robotVel.linear.x = this->robotVel.linear.x;
     this->velPub.publish(this->robotVel);
+
+    Picco1.Score = 0.0;
+    Picco2.Score = 0.0;
+    Picco3.Score = 0.0;
+    Picco1.DoNotDrive = 0.0;
+    Picco2.DoNotDrive = 0.0;
+    Picco3.DoNotDrive = 0.0;
+
+    //ROS_INFO("1: S:%d , F:%d", this->PiccoloRobot1.succesful, this->PiccoloRobot1.failed);
+    //ROS_INFO("2: S:%d , F:%d", this->PiccoloRobot2.succesful, this->PiccoloRobot2.failed);
+    //ROS_INFO("3: S:%d , F:%d", this->PiccoloRobot3.succesful, this->PiccoloRobot3.failed);
+    //ROS_INFO("--------------------------");
 
     //ROS_INFO("springLegolas 2");
 }
@@ -591,15 +636,17 @@ void Piccolos::springPiccolo()
 
 void Piccolos::initPiccolos(std::string topicNameSub, std::string topicNamePub, int rID)
 {
-    std::string subName, commandName;
+    std::string subName, commandName, jobName;
     subName = "/Piccolo"+std::to_string(rID);
     commandName = "/orderToPiccolo"+std::to_string(rID);
+    jobName = "/PiccoloStatus";
 
     this->init(subName);
     this->robotID = rID;
     this->boxLocationSub = this->n.subscribe(topicNameSub, 0,&Piccolos::legolasCallbackLocation,this);
     this->reciveCommandedSub = this->n.subscribe(commandName,0,&Piccolos::reciveCommandCallback,this);
     this->bidPub = this->n.advertise<multiagent_system::auction>(topicNamePub, 3);
+    this->jobPub = this->n.advertise<multiagent_system::jobStatus>(jobName, 1);
     this->robotVel.linear.x = 0.0;
     this->robotVel.angular.z = 0.0;
 }
@@ -611,10 +658,16 @@ void Piccolos::legolasCallbackLocation(const multiagent_system::boxesList::Const
     float minDist = 10000.0;
     int minIndex;
     float currDist;
+    bid.rID = 0;
+    bid.Score = 0.0;
+    bid.boxItem = 0;
+    bid.Position.position.x = 0.0;
+    bid.Position.position.y = 0.0;
+    //ROS_INFO("size:%d",msg->data.size());
     for(int i = 0; i < msg->data.size();i+=2)
     {
         currDist = std::sqrt(std::pow(msg->data[i] - this->robotPosition.position.x, 2)+std::pow(msg->data[i+1] - this->robotPosition.position.y, 2));
-        //ROS_INFO('currDist: %.4f', currDist);
+        //ROS_INFO("rID:%d, currDist:%.4f", this->robotID, currDist);
         if(currDist < minDist)
         {
             minDist = currDist;
@@ -622,21 +675,27 @@ void Piccolos::legolasCallbackLocation(const multiagent_system::boxesList::Const
         }
 
     }
-    if(msg->data[0] > 0.01 && msg->data[1] > 0.01)
+
+    bid.rID = this->robotID;
+    if(this->working || this->breakTime)
     {
-        bid.rID = this->robotID;
-        if(this->robotVel.linear.x > 0.001 || this->robotVel.angular.z > 0.001)
-            bid.DoNotDrive = DoNotDriveValue;
-        else
-            bid.DoNotDrive = 0.0;
-
-        bid.Score = currDist;
-        bid.boxItem = minIndex;
-        bid.Position.position.x = msg->data[minIndex];
-        bid.Position.position.y = msg->data[minIndex+1];
-
-        this->bidPub.publish(bid);
+        bid.DoNotDrive = DoNotDriveValue;
+        bid.Score = DoNotDriveValue;
     }
+    else
+    {
+        bid.DoNotDrive = 0.0;
+        bid.Score = currDist;
+    }
+
+    bid.boxItem = minIndex;
+    bid.Position.position.x = msg->data[minIndex];
+    bid.Position.position.y = msg->data[minIndex+1];
+
+    //ROS_INFO("rID:%d, bid.Score:%.4f", this->robotID, bid.Score);
+
+    this->bidPub.publish(bid);
+
     //ROS_INFO("legolasCallbackLocation 2");
 }
 
@@ -646,7 +705,7 @@ void Piccolos::reciveCommandCallback(const multiagent_system::auction::ConstPtr&
 {
     //ROS_INFO("reciveCommandCallback 1");
     //ROS_INFO("RID: %d, bid Value: %f", this->robotID, this->robotPosition.orientation.y);
-    if(!this->working && !this->pushingBox && msg->DoNotDrive != DoNotDriveValue)
+    if(!this->working && !this->pushingBox)// && msg->DoNotDrive != DoNotDriveValue)
     {
         this->boxPosition = msg->Position.position;
         this->working = true;
@@ -660,14 +719,10 @@ void Piccolos::reciveCommandCallback(const multiagent_system::auction::ConstPtr&
 void Piccolos::executeCommandCallback()
 {
     //ROS_INFO("executeCommandCallback 1");
-    if(this->boxPosition.x < 0.01 && this->boxPosition.y < 0.01)
+    if(fabs(this->boxPosition.x) < 0.01 && fabs(this->boxPosition.y) < 0.01)
     {
-        this->pushingBox = false;
-        this->working = false;
-        this->breakTime = false;
-        this->noTurning = false;
-        this->robotVel.angular.z = 0.0;
-        this->robotVel.linear.x = 0.0;
+        ROS_INFO("RESET executeCommandCallback");
+        this->reset();
         return;
     }
     float rotationAngle=0.0;
@@ -681,8 +736,8 @@ void Piccolos::executeCommandCallback()
             rotationAngle = (float)atan2(0.0, 0.0);
 
         //rotationAngle = rotationAngle * M_PI;
-        ROS_INFO("Box: %.2f , %.2f", this->boxPosition.x, this->boxPosition.y);
-        ROS_INFO("Robot: %.2f , %.2f", this->robotPosition.position.x, this->robotPosition.position.y);
+        //ROS_INFO("Box: %.2f , %.2f", this->boxPosition.x, this->boxPosition.y);
+        //ROS_INFO("Robot: %.2f , %.2f", this->robotPosition.position.x, this->robotPosition.position.y);
         //ROS_INFO("Box-Robot-: %.2f , %.2f", (this->boxPosition.x - this->robotPosition.position.x), (this->boxPosition.y - this->robotPosition.position.y));
         //ROS_INFO("RID %d, rotationAngle %f, YAW %f", this->robotID, rotationAngle, tf::getYaw(this->robotPosition.orientation));
         //ROS_INFO("RID %d, rotationAngle - Yaw: %f", this->robotID, rotationAngle - tf::getYaw(this->robotPosition.orientation));
@@ -690,7 +745,7 @@ void Piccolos::executeCommandCallback()
         /*ROS_INFO("%d, angle: %f , rotationAngle: %f: ", (int)this->robotID,
                  (float)fabs(rotationAngle - (float)robotPosition.orientation.z),
                  rotationAngle);*/
-        if(((rotationAngle - tf::getYaw(this->robotPosition.orientation)) > (0.3)) || ((rotationAngle - tf::getYaw(this->robotPosition.orientation)) < (-0.3)))
+        if(((rotationAngle - tf::getYaw(this->robotPosition.orientation)) > (0.2)) || ((rotationAngle - tf::getYaw(this->robotPosition.orientation)) < (-0.2)))
             this->noTurning = false;
 
         float turnSpeed = (rotationAngle - tf::getYaw(this->robotPosition.orientation));
@@ -705,13 +760,13 @@ void Piccolos::executeCommandCallback()
             turnSpeed = std::max(turnSpeed, -MAXSPEED);
         }
 
-        if(!this->noTurning && ((rotationAngle - tf::getYaw(this->robotPosition.orientation)) > (0.02)) )//|| ((rotationAngle - tf::getYaw(this->robotPosition.orientation)) < (-0.02)))
+        if(!this->noTurning && ((rotationAngle - tf::getYaw(this->robotPosition.orientation)) > (0.01)) )//|| ((rotationAngle - tf::getYaw(this->robotPosition.orientation)) < (-0.02)))
         {
             //ROS_INFO("1");
             this->robotVel.angular.z = turnSpeed;
             this->robotVel.linear.x = 0.0;
         }
-        else if(!this->noTurning && (rotationAngle - tf::getYaw(this->robotPosition.orientation)) < (-0.02))
+        else if(!this->noTurning && (rotationAngle - tf::getYaw(this->robotPosition.orientation)) < (-0.01))
         {
             //ROS_INFO("2");
             this->robotVel.angular.z = turnSpeed;
@@ -719,9 +774,9 @@ void Piccolos::executeCommandCallback()
         }
         else
         {
-            ROS_INFO("YIPPI");
+            //ROS_INFO("YIPPI");
             this->robotVel.angular.z = 0.0;
-            this->robotVel.linear.x = 0.5;
+            this->robotVel.linear.x = 0.3;
             this->noTurning = true;
         }
     }
@@ -752,12 +807,8 @@ void Piccolos::work9To5()
     dist = sqrt(dist);
     if(dist < 0.1 && minFrontBox > 0.2)
     {
-        this->pushingBox = false;
-        this->working = false;
-        this->breakTime = false;
-        this->noTurning = false;
-        this->robotVel.angular.z = 0.0;
-        this->robotVel.linear.x = 0.0;
+        ROS_INFO("RESET work9to5");
+        this->reset();
         return;
     }
 
@@ -770,30 +821,62 @@ void Piccolos::work9To5()
     if(this->pushingBox && !this->breakTime)
     {
         if(minFrontWall < 0.5)
+        {
             this->breakTime = true;
 
+            if(minFrontBox+0.025 < minFrontWall)
+            {
+                ROS_INFO("JOB SUCCESSFULLY DONE");
+                this->jobReport.success = true;
+                this->jobReport.rID = this->robotID;
+            }
+            else
+            {
+                ROS_INFO("JOB FAILED");
+                this->jobReport.success = false;
+                this->jobReport.rID = this->robotID;
+            }
+            jobPub.publish(this->jobReport);
+        }
+
         this->robotVel.angular.z = 0.0;
-        this->robotVel.linear.x = 0.5;
+        this->robotVel.linear.x = 0.3;
     }
     else if(this->breakTime)
     {
         if(minFrontWall < 1.5)
         {
             this->robotVel.angular.z = 0.0;
-            this->robotVel.linear.x = -0.5;
+            this->robotVel.linear.x = -0.3;
         }
         else
         {
-            this->pushingBox = false;
-            this->breakTime = false;
+            ROS_INFO("RESET Backing clear");
+            this->reset();
+            return;
         }
     }
     else
     {
-        this->pushingBox = false;
-        this->breakTime = false;
+        //this->pushingBox = false;
+        //this->breakTime = false;
     }
 }
+
+
+
+void Piccolos::reset()
+{
+    this->pushingBox = false;
+    this->working = false;
+    this->breakTime = false;
+    this->noTurning = false;
+    this->robotVel.angular.z = 0.0;
+    this->robotVel.linear.x = 0.0;
+    this->boxPosition.x = 0.0;
+    this->boxPosition.y = 0.0;
+}
+
 
 
 void Agent::run()
