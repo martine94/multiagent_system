@@ -52,6 +52,7 @@ add_message_files(
   FILES
   boxesList.msg
   auction.msg
+  jobStatus.msg
 #   Message1.msg
 #   Message2.msg
 )
