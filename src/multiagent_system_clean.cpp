@@ -7,6 +7,9 @@
 #include "multiagent_system/boxesList.h"
 #include "multiagent_system/auction.h"
 #include "multiagent_system/jobStatus.h"
+#include<random>
+#include<ctime>
+#include<time.h>
 
 #include <math.h>
 #include <algorithm>
@@ -18,6 +21,7 @@
 #define DoNotDriveValue 1000.0
 #define MAXSPEED 5.0f
 #define MINSPEED 0.1f
+#define BoxTakenSize 0.17f
 
 class Agent
 {
@@ -77,6 +81,9 @@ public:
     bool working = false;
     bool breakTime = false;
     bool noTurning = false;
+
+    time_t now, end;
+    //struct tm end;
 };
 
 class Legolas : Agent
@@ -95,6 +102,8 @@ public:
     ros::Subscriber bidSub, jobSub;
 
     multiagent_system::auction Picco1, Picco2, Picco3;
+
+    geometry_msgs::Point P[4];
 
     struct PiccoloChord
     {
@@ -122,12 +131,12 @@ void Agent::init(std::string topicName)
 }
 
 
+
 void Agent::poseCallback(const nav_msgs::Odometry::ConstPtr& msg) {
 // Robot pose (odometry)
         geometry_msgs::Pose robot_pose = msg->pose.pose;
         this->robotPosition = robot_pose;
 }
-
 
 
 
@@ -229,9 +238,9 @@ bool Agent::avoid(geometry_msgs::Twist &msg, int r)
 
     if(minFront < 0.5) {
         if(minLeftFront < minRightFront)
-            direction = -0.3;
+            direction = -0.6;
         else
-            direction = 0.3;
+            direction = 0.6;
 
         this->looked = true;
         ////ROS_INFO("WALL FRONT");
@@ -263,19 +272,19 @@ bool Agent::avoid(geometry_msgs::Twist &msg, int r)
         if(minLeftFront < 0.2) {
             if(minLeftFront < 0.25) {
                 msg.linear.x = 0.0;
-                msg.angular.z = -0.3;
+                msg.angular.z = -0.6;
                 ////ROS_INFO("TURN");
             }
             else {
                 msg.linear.x = 0.1;
-                msg.angular.z = -0.3;
+                msg.angular.z = -0.6;
                 ////ROS_INFO("Move slow while Turn");
             }
         }
         else
         {
             msg.linear.x = 0.1;
-            msg.angular.z = -0.3;
+            msg.angular.z = -0.6;
             ////ROS_INFO("Start Truning");
         }
         //msg.angular.z = msg.angular.z*10;
@@ -287,45 +296,46 @@ bool Agent::avoid(geometry_msgs::Twist &msg, int r)
         if(minRightFront < 0.2) {
             if(minRightFront < 0.5) {
                 msg.linear.x = 0.0;
-                msg.angular.z = 0.3;
+                msg.angular.z = 0.6;
                 ////ROS_INFO("TURN");
             }
             else {
                 msg.linear.x = 0.1;
-                msg.angular.z = 0.3;
+                msg.angular.z = 0.6;
                 ////ROS_INFO("Move slow while Turn");
             }
         }
         else
         {
             msg.linear.x = 0.1;
-            msg.angular.z = 0.3;
+            msg.angular.z = 0.6;
             ////ROS_INFO("Start Truning");
         }
         //msg.angular.z = msg.angular.z*10;
         return false;
     }
-    if(minLeft < 0.1) {
+    if(minLeft < 0.2) {
         this->looked = true;
         ////ROS_INFO("WALL LEFT");
         msg.linear.x = 0.1;
-        msg.angular.z = -0.3;
+        msg.angular.z = -0.6;
         ////ROS_INFO("TURN");
         //msg.angular.z = msg.angular.z*10;
         return false;
     }
-    if(minRight < 0.1) {
+    if(minRight < 0.2) {
         this->looked = true;
         ////ROS_INFO("WALL RIGHT");
         msg.linear.x = 0.1;
-        msg.angular.z = 0.3;
+        msg.angular.z = 0.6;
         ////ROS_INFO("TURN");
         //msg.angular.z = msg.angular.z*10;
         return false;
     }
     this->looked = false;
+
     msg.linear.x = 0.3;
-    msg.angular.z = 0.4;
+    msg.angular.z = 0.0;
     //msg.angular.z = msg.angular.z*10;
     return false;
 }
@@ -528,8 +538,8 @@ void Legolas::locateBox()
                 yPrim = (sin(j*angleIncrement))*distance;
                 x = (float)((xPrim*cos(t)) + (-yPrim*sin(t)) + (this->robotPosition.position.x));
                 y = (float)((xPrim*sin(t)) + (yPrim*cos(t)) + (this->robotPosition.position.y));
-                if(items.size() > 0 && fabs(items[items.size()-2] - x) < 0.14
-                                    && fabs(items[items.size()-1] - y) < 0.14)
+                if(items.size() > 0 && fabs(items[items.size()-2] - x) < BoxTakenSize
+                                    && fabs(items[items.size()-1] - y) < BoxTakenSize)
                                     //&& x-xPrim < 0.05 && y-yPrim < 0.05)
                 {
 
@@ -558,7 +568,7 @@ void Legolas::locateBox()
 void Legolas::dealer(multiagent_system::auction &Picco1, multiagent_system::auction &Picco2)  //dealerMsg
 {
     //ROS_INFO("dealer 1");
-    if(Picco1.Position.position.x - Picco2.Position.position.x < 0.14 && Picco1.Position.position.y - Picco2.Position.position.y < 0.14)
+    if(fabs(Picco1.Position.position.x - Picco2.Position.position.x) < BoxTakenSize && fabs(Picco1.Position.position.y - Picco2.Position.position.y) < BoxTakenSize)
         //if(Picco1.Score == std::min(Picco1.Score, Picco2.Score))
             //Picco2.Score = DoNotDriveValue;
         if(Picco2.Score == std::min(Picco1.Score,Picco2.Score))
@@ -585,9 +595,22 @@ void Legolas::giveCommand(const multiagent_system::auction &Picco)              
         //
         destination.rID = Picco.rID;
         destination.Position = Picco.Position;
-
-        this->currPicc.publish(destination);
-
+        bool alreadyTaken = false;
+        for(int i = 1; i < 4; i++)
+        {
+            float dist = sqrt(pow(P[i].x - destination.Position.position.x, 2) + pow(P[i].y - destination.Position.position.y, 2));
+            if(dist < BoxTakenSize)
+            {
+                alreadyTaken = true;
+                break;
+            }
+        }
+        if(!alreadyTaken)
+        {
+            P[Picco.rID].x = destination.Position.position.x;
+            P[Picco.rID].y = destination.Position.position.y;
+            this->currPicc.publish(destination);
+        }
     }
 }
 
@@ -604,8 +627,6 @@ void Legolas::springLegolas()
     this->giveCommand(this->Picco2);
     this->giveCommand(this->Picco3);
     this->avoid(this->robotVel, SensorBox);
-    this->robotVel.angular.z = this->robotVel.angular.z;
-    this->robotVel.linear.x = this->robotVel.linear.x;
     this->velPub.publish(this->robotVel);
 
     Picco1.Score = 0.0;
@@ -721,7 +742,7 @@ void Piccolos::executeCommandCallback()
     //ROS_INFO("executeCommandCallback 1");
     if(fabs(this->boxPosition.x) < 0.01 && fabs(this->boxPosition.y) < 0.01)
     {
-        ROS_INFO("RESET executeCommandCallback");
+        //ROS_INFO("RESET executeCommandCallback");
         this->reset();
         return;
     }
@@ -807,7 +828,7 @@ void Piccolos::work9To5()
     dist = sqrt(dist);
     if(dist < 0.1 && minFrontBox > 0.2)
     {
-        ROS_INFO("RESET work9to5");
+        //ROS_INFO("RESET work9to5");
         this->reset();
         return;
     }
@@ -820,8 +841,19 @@ void Piccolos::work9To5()
 
     if(this->pushingBox && !this->breakTime)
     {
-        if(minFrontWall < 0.5)
+        /*if(minFrontWall < 0.5)
         {
+            this->robotVel.angular.z = 0.0;
+            this->robotVel.linear.x = 0.0;
+            this->velPub.publish(this->robotVel);
+            time(&this->now);
+            this->end = this->now + 5;
+            while(now < end)
+                time(&this->now);
+        }*/
+
+        if(minFrontWall < 0.5)
+        {  
             this->breakTime = true;
 
             if(minFrontBox+0.025 < minFrontWall)
@@ -851,7 +883,7 @@ void Piccolos::work9To5()
         }
         else
         {
-            ROS_INFO("RESET Backing clear");
+            //ROS_INFO("RESET Backing clear");
             this->reset();
             return;
         }
